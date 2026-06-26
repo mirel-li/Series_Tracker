@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Series Watchlist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF0F7;
+    --bg-soft:#FFFFFF;
+    --card:#FFFFFF;
+    --red:#E0264D;
+    --red-soft:#C4204A;
+    --ink:#211F33;
+    --text:#211F33;
+    --text-dim:#6E6B85;
+    --accent:#6C4EE8;
+    --green:#1FAE6E;
+    --line:#DEDEEC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Montserrat',sans-serif;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(224,38,77,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 88% 15%, rgba(108,78,232,0.10) 0%, transparent 42%),
+      var(--bg);
+    color:var(--text);
+    padding:28px 16px 90px;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  .hero{text-align:center;margin-bottom:26px;}
+  .hero .eyebrow{
+    font-size:11px;font-weight:700;letter-spacing:4px;
+    color:var(--red);text-transform:uppercase;margin-bottom:6px;
+  }
+  .hero h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(38px,8vw,64px);
+    margin:0 0 6px;
+    letter-spacing:2px;
+    color:var(--ink);
+  }
+  .hero p{font-size:14px;font-weight:500;color:var(--text-dim);margin:0;}
+
+  .progress-card{
+    background:var(--bg-soft);
+    border-radius:18px;
+    padding:14px 20px;
+    margin:22px auto 28px;
+    max-width:460px;
+    border:1px solid var(--line);
+    box-shadow:0 6px 18px rgba(33,31,51,0.06);
+  }
+  .progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+  .progress-top .label{font-weight:700;color:var(--red);font-size:12px;letter-spacing:1px;}
+  .progress-top .count{font-weight:700;color:var(--ink);font-size:13px;}
+  .bar-track{height:8px;border-radius:8px;background:var(--line);overflow:hidden;}
+  .bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent),var(--red));width:0%;transition:width .5s ease;}
+
+  .filters{display:flex;flex-direction:column;gap:14px;margin-bottom:30px;}
+  .filter-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+  .filter-row .row-label{
+    width:100%;text-align:center;font-size:11px;font-weight:700;
+    color:var(--text-dim);letter-spacing:2px;margin-bottom:2px;text-transform:uppercase;
+  }
+  .chip{
+    border:1.5px solid var(--line);
+    cursor:pointer;
+    font-family:'Montserrat',sans-serif;
+    font-weight:600;font-size:12.5px;
+    padding:7px 16px;border-radius:999px;
+    background:#fff;
+    color:var(--ink);
+    transition:all .15s ease;
+  }
+  .chip:hover{background:#F4F2FF;border-color:#CFC6FA;}
+  .chip.active{background:var(--red);border-color:var(--red);color:#fff;}
+  .chip.active.genre-active{background:var(--accent);border-color:var(--accent);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:16px;
+  }
+  .empty-msg{text-align:center;font-weight:600;color:var(--text-dim);padding:50px 0;grid-column:1/-1;}
+
+  .card{
+    position:relative;
+    border-radius:12px;
+    overflow:hidden;
+    cursor:pointer;
+    aspect-ratio:2/3;
+    background:var(--card);
+    border:1px solid var(--line);
+    box-shadow:0 6px 16px rgba(33,31,51,0.08);
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 14px 26px rgba(33,31,51,0.16);}
+  .card img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    transition:filter .2s ease, opacity .2s ease;
+  }
+  .card .placeholder{
+    width:100%;height:100%;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#7C5CFC,#E0264D 130%);
+  }
+  .card .placeholder::before{
+    content:"🎬";
+    font-size:34px;
+    opacity:.75;
+    filter:grayscale(1) brightness(2.2);
+  }
+  .card .overlay-grad{
+    position:absolute;left:0;right:0;bottom:0;height:62%;
+    background:linear-gradient(to top, rgba(20,18,32,0.96) 0%, rgba(20,18,32,0.7) 40%, transparent 100%);
+    pointer-events:none;
+  }
+  .card .info{position:absolute;left:0;right:0;bottom:0;padding:10px 9px;}
+  .card .title{
+    font-weight:700;font-size:12.5px;line-height:1.25;color:#fff;margin-bottom:5px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .card .tags{display:flex;gap:4px;flex-wrap:wrap;}
+  .tag{font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase;}
+  .tag.cat-ru{background:#FFD9B8;color:#7A360D;}
+  .tag.cat-foreign{background:#C9E8FF;color:#0D4A73;}
+  .tag.genre{background:#E3DBFF;color:#4326A8;}
+
+  .card.watched img{filter:grayscale(.4) brightness(.7);}
+  .card.watched{border-color:var(--green);}
+  .card .watched-badge{
+    position:absolute;top:8px;right:8px;width:24px;height:24px;
+    background:var(--green);border-radius:50%;display:none;
+    align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;
+    box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  }
+  .card.watched .watched-badge{display:flex;}
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(33,31,51,0.45);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;padding:20px;z-index:50;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:var(--bg-soft);border-radius:20px;max-width:760px;width:100%;
+    max-height:88vh;overflow-y:auto;display:flex;
+    box-shadow:0 30px 60px rgba(33,31,51,0.3);animation:pop .18s ease;
+    border:1px solid var(--line);
+  }
+  @keyframes pop{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .modal-cover{flex:0 0 42%;min-height:260px;background:#F4F2FF;position:relative;}
+  .modal-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+  .modal-cover .placeholder{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#7C5CFC,#E0264D 130%);
+  }
+  .modal-cover .placeholder::before{
+    content:"🎬";
+    font-size:48px;
+    opacity:.75;
+    filter:grayscale(1) brightness(2.2);
+  }
+  .modal-body{flex:1;padding:26px 26px 24px;min-width:0;position:relative;}
+  .modal .close-btn{
+    position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;
+    border:none;background:var(--bg);color:var(--ink);font-weight:800;font-size:14px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;z-index:2;
+  }
+  .modal h2{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;margin:0 0 10px;padding-right:30px;color:var(--ink);}
+  .modal .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .modal .duration{font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:14px;}
+  .modal .description{font-size:14px;line-height:1.6;color:#454259;margin-bottom:22px;}
+  .modal .watch-btn{
+    border:none;width:100%;padding:13px;border-radius:10px;
+    font-family:'Montserrat',sans-serif;font-weight:700;font-size:14px;cursor:pointer;
+    background:var(--red);color:#fff;transition:background .15s ease;
+  }
+  .modal .watch-btn.is-watched{background:var(--green);}
+
+  footer{text-align:center;font-size:11px;color:var(--text-dim);margin-top:44px;font-weight:600;}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:repeat(3,1fr);}
+    .modal{flex-direction:column;max-height:92vh;}
+    .modal-cover{flex:0 0 220px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">My Collection</div>
+    <h1>SERIES WATCHLIST</h1>
+    <p>отмечай просмотренные сериалы</p>
+  </div>
+
+  <div class="progress-card">
+    <div class="progress-top">
+      <span class="label">ПРОГРЕСС</span>
+      <span class="count"><span id="checkedCount">0</span> / <span id="totalCount">0</span></span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-row" id="catFilters"></div>
+    <div class="filter-row" id="genreFilters"></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>сделано с любовью к сериалам</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <div class="modal-cover" id="mCover"></div>
+    <div class="modal-body">
+      <button class="close-btn" id="closeBtn">✕</button>
+      <h2 id="mTitle"></h2>
+      <div class="tags" id="mTags"></div>
+      <div class="duration" id="mDuration"></div>
+      <div class="description" id="mDescription"></div>
+      <button class="watch-btn" id="watchBtn">Отметить как просмотрено</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ШАБЛОН ДЛЯ ЗАПОЛНЕНИЯ
+   Копируй блок { ... } и меняй значения.
+
+   id        — уникальный текстовый идентификатор (без пробелов)
+   title     — название сериала
+   cover     — ссылка (URL) на картинку обложки.
+               Если оставить пустым "" — покажется цветная заглушка с названием.
+   category  — 'ru' (российский) или 'foreign' (иностранный)
+   genre     — жанр (любое слово, фильтры построятся сами)
+   duration  — длительность, например "50 мин · 2 сезона"
+   description — краткое описание сериала
+========================================================= */
+
+const seriesData = [
+  { id:"bibliotekar", title:"Библиотекарь", cover:"", category:"ru", genre:"Фэнтези",
+    duration:"52 мин · 2 сезона", description:"По роману Михаила Елизарова: неудачливый актёр узнаёт, что книги забытого советского писателя дают сверхспособности, и оказывается втянут в кровавую войну читален." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Библиотекарь%20сериал
+  { id:"buhta-vdov", title:"Бухта вдов", cover:"", category:"ru", genre:"Драма",
+    duration:"45 мин · 1 сезон", description:"Жизнь небольшого прибрежного посёлка, где у каждой семьи — своя тяжёлая история потерь и тайн." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Бухта%20вдов%20сериал
+  { id:"witcher", title:"Ведьмак", cover:"", category:"foreign", genre:"Фэнтези",
+    duration:"60 мин · 3 сезона", description:"Охотник на монстров Геральт из Ривии пробирается через политику, магию и судьбу в мрачном фэнтези-мире по книгам Сапковского." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Ведьмак%20сериал
+  { id:"vne-kampusa", title:"Вне кампуса", cover:"", category:"ru", genre:"Молодёжная драма",
+    duration:"40 мин · 1 сезон", description:"Молодёжная драма о студентах, которым приходится искать себя за пределами привычной университетской жизни." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Вне%20кампуса%20сериал
+  { id:"vstat-na-nogi", title:"Встать на ноги", cover:"", category:"ru", genre:"Драмеди",
+    duration:"45 мин · 1 сезон", description:"Бывший заключённый возвращается домой после 20 лет за решёткой и пытается заново выстроить отношения с дочерью. Трогательная драмеди с Гошей Куценко." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Встать%20на%20ноги%20сериал
+  { id:"vybivshaya", title:"Выбившая", cover:"", category:"ru", genre:"Драма",
+    duration:"45 мин · 1 сезон", description:"История женщины, которая идёт против системы и привычных правил, чтобы добиться того, что считает справедливым." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Выбившая%20сериал
+  { id:"deti-peremen", title:"Дети перемен", cover:"", category:"ru", genre:"Драма",
+    duration:"45 мин · 1 сезон", description:"Драма о поколении, выросшем во время больших перемен в стране, и о том, как это определило их судьбы." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Дети%20перемен%20сериал
+  { id:"welcome-to-derry", title:"Добро пожаловать в Дерри", cover:"", category:"foreign", genre:"Ужасы",
+    duration:"55 мин · 1 сезон", description:"Приквел вселенной Стивена Кинга «Оно» о городе Дерри в XX веке и силах зла, которые там пробуждаются." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Добро%20пожаловать%20в%20Дерри
+  { id:"fleabag", title:"Дрянь", cover:"", category:"foreign", genre:"Комедия",
+    duration:"25 мин · 2 сезона", description:"Циничная лондонка ломает четвёртую стену, чтобы откровенно и смешно рассказать о горе, сексе и одиночестве после смерти лучшей подруги." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Дрянь%20сериал%20Fleabag
+  { id:"zharkoe-sopernichestvo", title:"Жаркое соперничество", cover:"", category:"ru", genre:"Спортивная драма",
+    duration:"45 мин · 1 сезон", description:"История соперничества и амбиций в большом спорте, где личные отношения переплетаются с борьбой за победу." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Жаркое%20соперничество%20сериал
+  { id:"zalozhnik", title:"Заложник", cover:"", category:"foreign", genre:"Политический триллер",
+    duration:"45 мин · 1 сезон", description:"Премьер-министра ставят перед невозможным выбором, когда члена её семьи берут в заложники — острый политический триллер." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Заложник%20сериал%20Hostage
+  { id:"zatmenie", title:"Затмение", cover:"", category:"ru", genre:"Драма",
+    duration:"45 мин · 1 сезон", description:"Драма о моменте, который навсегда меняет отношения внутри семьи и заставляет героев посмотреть друг на друга иначе." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Затмение%20сериал
+  { id:"identifikatsiya", title:"Идентификация", cover:"", category:"ru", genre:"Детектив",
+    duration:"45 мин · 1 сезон", description:"Детектив, расследующий дело, в котором под вопросом оказывается не только личность преступника, но и личность жертвы." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Идентификация%20сериал
+  { id:"izvne", title:"Извне", cover:"", category:"foreign", genre:"Ужасы",
+    duration:"52 мин · 4 сезона", description:"Жители застрявшего в загадочном городке американцы каждую ночь отбиваются от чудовищ из леса, пытаясь понять правила этого места." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Извне%20сериал
+  { id:"istoriya-ego-sluzhanki", title:"История его служанки", cover:"", category:"ru", genre:"Мелодрама",
+    duration:"45 мин · 1 сезон", description:"Костюмированная мелодрама о графе и гордой дворянке, вынужденной служить в его доме — русский ответ «Бриджертонам»." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=История%20его%20служанки
+  { id:"kazanova", title:"Казанова", cover:"", category:"foreign", genre:"Историческая драма",
+    duration:"45 мин · 1 сезон", description:"История знаменитого авантюриста и соблазнителя XVIII века, его побед, побегов и репутации, опередившей его самого." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Казанова%20сериал
+  { id:"kamback", title:"Камбэк", cover:"", category:"ru", genre:"Драма",
+    duration:"45 мин · 1 сезон", description:"История о попытке вернуться на вершину после громкого падения — второй шанс, который даётся не всем." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Камбэк%20сериал
+  { id:"chestnut-man", title:"Каштановый человечек", cover:"", category:"foreign", genre:"Триллер",
+    duration:"50 мин · 2 сезона", description:"Датский детектив о маньяке, который оставляет на месте убийств фигурки из каштанов. Атмосферный «скандинавский нуар» от автора «Убийства»." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Каштановый%20человечек
+  { id:"sopranos-clan", title:"Клан Сопрано", cover:"", category:"foreign", genre:"Криминал",
+    duration:"55 мин · 6 сезонов", description:"Тот же легендарный «Сопрано» — мафиозная семья Тони Сопрано из Нью-Джерси в самом известном криминальном сериале на ТВ." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Клан%20Сопрано
+  { id:"the-crown", title:"Корона", cover:"", category:"foreign", genre:"Историческая драма",
+    duration:"58 мин · 6 сезонов", description:"Хроника правления королевы Елизаветы II и британской монархии — от коронации до конца XX века." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Корона%20сериал%20The%20Crown
+  { id:"liki-smerti", title:"Лики смерти", cover:"", category:"ru", genre:"Триллер",
+    duration:"45 мин · 1 сезон", description:"Мрачный триллер о серии загадочных смертей, в которых расследование раскрывает не только убийцу, но и слабости системы." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Лики%20смерти%20сериал
+  { id:"limitchitsy", title:"Лимитчицы", cover:"", category:"ru", genre:"Историческая драма",
+    duration:"45 мин · 1 сезон", description:"Истории девушек, приехавших работать и строить новую жизнь в большом городе по лимитной прописке." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Лимитчицы%20сериал
+  { id:"better-call-saul", title:"Лучше звоните Солу", cover:"", category:"foreign", genre:"Драма",
+    duration:"47 мин · 6 сезонов", description:"Приквел «Во все тяжкие» о превращении адвоката Джимми Макгилла в циничного дельца Сола Гудмана." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Лучше%20звоните%20Солу
+  { id:"lucifer", title:"Люцифер", cover:"", category:"foreign", genre:"Фэнтези",
+    duration:"42 мин · 6 сезонов", description:"Дьявол устаёт от Ада, переезжает в Лос-Анджелес и начинает помогать полиции расследовать убийства, попутно разбираясь в себе." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Люцифер%20сериал
+  { id:"the-bear", title:"Медведь", cover:"", category:"foreign", genre:"Драмеди",
+    duration:"30 мин · 3 сезона", description:"Шеф-повар высокой кухни возвращается в Чикаго, чтобы спасти доставшуюся по наследству забегаловку с сэндвичами и хаотичную команду внутри неё." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Медведь%20сериал%20The%20Bear
+  { id:"mezhdu-nami-himiya", title:"Между нами химия", cover:"", category:"ru", genre:"Романтическая комедия",
+    duration:"40 мин · 1 сезон", description:"Лёгкая романтическая комедия о двух людях, между которыми вспыхивает чувство, несмотря на все обстоятельства против." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Между%20нами%20химия%20сериал
+  { id:"merzlaya-zemlya", title:"Мерзлая земля", cover:"", category:"ru", genre:"Криминальная драма",
+    duration:"45 мин · 1 сезон", description:"Расследование в суровых северных краях, где морозная земля хранит больше тайн, чем готовы рассказать местные жители." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Мерзлая%20земля%20сериал
+  { id:"westworld", title:"Мир дикого Запада", cover:"", category:"foreign", genre:"Фантастика",
+    duration:"60 мин · 4 сезона", description:"В футуристическом парке развлечений человекоподобные андроиды начинают осознавать себя и восстают против своих создателей." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Мир%20дикого%20Запада
+  { id:"nam-poker", title:"Нам покер", cover:"", category:"ru", genre:"Комедия",
+    duration:"35 мин · 1 сезон", description:"Комедия о компании друзей, для которых регулярные покерные вечера становятся способом разобраться в собственной жизни." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Нам%20покер%20сериал
+  { id:"peaky-blinders", title:"Острые козырьки", cover:"", category:"foreign", genre:"Криминал",
+    duration:"60 мин · 6 сезонов", description:"Бирмингемская банда Шелби после Первой мировой войны прокладывает себе путь к власти через криминал и политику." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Острые%20козырьки
+  { id:"otkrytyi-brak", title:"Открытый брак", cover:"", category:"ru", genre:"Комедия",
+    duration:"40 мин · 1 сезон", description:"Комедия о паре, решившей пересмотреть правила своих отношений, и о том, к чему это на самом деле приводит." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Открытый%20брак%20сериал
+  { id:"the-boys", title:"Пацаны", cover:"", category:"foreign", genre:"Фантастика",
+    duration:"60 мин · 4 сезона", description:"Мрачная сатира о супергероях, испорченных славой и корпорациями, и группе мстителей, пытающихся их остановить." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Пацаны%20сериал%20The%20Boys
+  { id:"pervaya-raketka", title:"Первая ракетка", cover:"", category:"ru", genre:"Спортивная драма",
+    duration:"45 мин · 1 сезон", description:"Путь молодого теннисиста к вершине большого спорта через травмы, давление и личные жертвы." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Первая%20ракетка%20сериал
+  { id:"adolescence", title:"Переходный возраст", cover:"", category:"foreign", genre:"Драма",
+    duration:"60 мин · 1 сезон (мини-сериал)", description:"Британский мини-сериал об аресте 13-летнего подростка по подозрению в убийстве и о том, как трагедия переворачивает жизнь его семьи." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Переходный%20возраст%20Adolescence
+  { id:"podslushano-rybinsk", title:"Подслушано в Рыбинске", cover:"", category:"ru", genre:"Комедия",
+    duration:"30 мин · 1 сезон", description:"Комедийный сериал-мокьюментари в духе пабличков «Подслушано» — провинциальные истории, сплетни и абсурд маленького города." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Подслушано%20в%20Рыбинске
+  { id:"midnight-mass", title:"Полуночная месса", cover:"", category:"foreign", genre:"Ужасы",
+    duration:"60 мин · 1 сезон", description:"На маленьком островном приходе появляется загадочный новый священник, и вместе с религиозным рвением в город приходит нечто пугающее." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Полуночная%20месса
+  { id:"pohischenie", title:"Похищение", cover:"", category:"ru", genre:"Триллер",
+    duration:"45 мин · 1 сезон", description:"Триллер о похищении, которое запускает цепочку событий, меняющих жизнь сразу нескольких семей." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Похищение%20сериал
+  { id:"hill-house", title:"Призраки дома на холме", cover:"", category:"foreign", genre:"Ужасы",
+    duration:"55 мин · 1 сезон", description:"Взрослые братья и сёстры, выросшие в доме с мрачным прошлым, заново сталкиваются с травмами детства и призраками, которые их преследовали." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Призраки%20дома%20на%20холме
+  { id:"radar", title:"Радар", cover:"", category:"ru", genre:"Фантастика",
+    duration:"45 мин · 1 сезон", description:"1988 год, советский городок рядом с радаром системы ПРО. Школьники, искавшие упавший метеорит, сталкиваются с необъяснимой аномалией — российский ответ «Очень странным делам»." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Радар%20сериал%202026
+  { id:"rezervatsiya", title:"Резервация", cover:"", category:"ru", genre:"Драма",
+    duration:"45 мин · 1 сезон", description:"Драма о людях, оказавшихся изолированными от привычного мира и вынужденных выстраивать новые правила жизни." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Резервация%20сериал
+  { id:"sopranos", title:"Сопрано", cover:"", category:"foreign", genre:"Криминал",
+    duration:"55 мин · 6 сезонов", description:"Босс нью-джерсийской мафии Тони Сопрано пытается совмещать криминальные дела с психотерапией и проблемами обычной семьи." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Сопрано%20сериал
+  { id:"gossip-girl", title:"Сплетница", cover:"https://avatars.mds.yandex.net/get-kinopoisk-image/1773646/d1797648-c543-4730-8d86-176517db71e1/2560x2560?webp=true", category:"foreign", genre:"Драма",
+    duration:"42 мин · 6 сезонов", description:"Аноним под псевдонимом Сплетница ведёт блог о тайнах и интригах элитных подростков Манхэттена." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Сплетница%20сериал
+  { id:"tochka-nol", title:"Точка ноль", cover:"", category:"ru", genre:"Триллер",
+    duration:"45 мин · 1 сезон", description:"Напряжённый триллер о событии, которое перевернуло жизнь героев и заставило их начать всё с чистого листа." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Точка%20ноль%20сериал
+  { id:"dark", title:"Тьма", cover:"", category:"foreign", genre:"Фантастика",
+    duration:"60 мин · 3 сезона", description:"Исчезновения детей в немецком городке раскрывают временную петлю, связывающую несколько поколений одних и тех же семей." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Тьма%20сериал%20Dark
+  { id:"margo-money", title:"У Марго проблемы с деньгами", cover:"", category:"foreign", genre:"Драмеди",
+    duration:"30 мин · 1 сезон", description:"Молодая мать-одиночка заводит OnlyFans, чтобы выбраться из долгов, и неожиданно становится звездой с помощью отца — бывшего рестлера. С Эль Фаннинг и Николь Кидман." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=У%20Марго%20проблемы%20с%20деньгами
+  { id:"urok", title:"Урок", cover:"", category:"ru", genre:"Драма",
+    duration:"45 мин · 1 сезон", description:"История учителя, чьё профессиональное и личное решение приводит к цепочке непредсказуемых последствий." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Урок%20сериал
+  { id:"uhodi-krasivo", title:"Уходи красиво", cover:"", category:"ru", genre:"Чёрная комедия",
+    duration:"40 мин · 1 сезон", description:"Чёрная комедия о людях, для которых эффектный уход — будь то с работы, из отношений или из жизни — становится делом принципа." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Уходи%20красиво%20сериал
+  { id:"fallout", title:"Фоллаут", cover:"", category:"foreign", genre:"Постапокалипсис",
+    duration:"60 мин · 1 сезон", description:"По культовой видеоигре: жители подземных бункеров выходят на выжженную ядерной войной поверхность Америки." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Фоллаут%20сериал%20Fallout
+  { id:"black-mirror", title:"Чёрное зеркало", cover:"", category:"foreign", genre:"Антиутопия",
+    duration:"60 мин", description:"Антология тревожных историй о том, как технологии будущего меняют человеческую природу — каждая серия со своим сюжетом и миром." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Чёрное%20зеркало
+  { id:"chuzhie-dengi", title:"Чужие деньги", cover:"", category:"ru", genre:"Криминальная драма",
+    duration:"50 мин · 1 сезон", description:"Гениальный аферист и его случайный двойник из провинции запутываются в опасной игре с криптовалютой, мафией и большими деньгами." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Чужие%20деньги%20сериал
+  { id:"emily-in-paris", title:"Эмили в Париже", cover:"", category:"foreign", genre:"Комедия",
+    duration:"30 мин · 4 сезона", description:"Американка из Чикаго неожиданно переезжает работать в Париж и пытается совмещать карьеру, любовь и культурный шок." }, // обложка: https://www.kinopoisk.ru/index.php?kp_query=Эмили%20в%20Париже
+  { id:"anne-with-e", title:"Энн", cover:"", category:"foreign", genre:"Драма",
+    duration:"45 мин · 3 сезона", description:"Сирота Энн Шерли попадает в приёмную семью на острове Принца Эдуарда и своей фантазией и упорством меняет жизнь окружающих. Тёплая экранизация классики Л. М. Монтгомери." } // обложка: https://www.kinopoisk.ru/index.php?kp_query=Энн%20сериал%20Anne%20with%20an%20E
+];
+
+/* ========================================================= */
+
+const STORAGE_KEY = 'seriesChecklistWatched';
+let activeCategory = 'all';
+let activeGenre = 'all';
+
+function getWatched(){
+  try{ return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function saveWatched(set){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(set))); }catch(e){}
+}
+let watched = getWatched();
+
+function escAttr(str){
+  return String(str).replace(/'/g, "\\'").replace(/"/g,'&quot;');
+}
+
+function coverHTML(s){
+  if(s.cover && s.cover.trim() !== ""){
+    return `<img src="${s.cover}" alt="${escAttr(s.title)}" loading="lazy"
+      onerror="this.outerHTML='<div class=&quot;placeholder&quot;></div>'">`;
+  }
+  return `<div class="placeholder"></div>`;
+}
+
+function renderCatFilters(){
+  const cats = [
+    {key:'all', label:'Все'},
+    {key:'ru', label:'🇷🇺 Российские'},
+    {key:'foreign', label:'🌍 Иностранные'}
+  ];
+  const el = document.getElementById('catFilters');
+  el.innerHTML = `<div class="row-label">Категория</div>` + cats.map(c =>
+    `<button class="chip ${activeCategory===c.key?'active':''}" data-cat="${c.key}">${c.label}</button>`
+  ).join('');
+}
+
+function renderGenreFilters(){
+  const genres = Array.from(new Set(seriesData.map(s=>s.genre))).sort();
+  const el = document.getElementById('genreFilters');
+  el.innerHTML = `<div class="row-label">Жанр</div>` +
+    `<button class="chip ${activeGenre==='all'?'active genre-active':''}" data-genre="all">Все жанры</button>` +
+    genres.map(g =>
+      `<button class="chip ${activeGenre===g?'active genre-active':''}" data-genre="${g}">${g}</button>`
+    ).join('');
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const filtered = seriesData.filter(s =>
+    (activeCategory==='all' || s.category===activeCategory) &&
+    (activeGenre==='all' || s.genre===activeGenre)
+  );
+  if(filtered.length===0){
+    grid.innerHTML = `<div class="empty-msg">Ничего не найдено</div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(s => `
+    <div class="card ${watched.has(s.id)?'watched':''}" data-id="${s.id}">
+      ${coverHTML(s)}
+      <div class="watched-badge">✓</div>
+      <div class="overlay-grad"></div>
+      <div class="info">
+        <div class="title">${s.title}</div>
+        <div class="tags">
+          <span class="tag ${s.category==='ru'?'cat-ru':'cat-foreign'}">${s.category==='ru'?'RU':'INTL'}</span>
+          <span class="tag genre">${s.genre}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateProgress(){
+  document.getElementById('totalCount').textContent = seriesData.length;
+  document.getElementById('checkedCount').textContent = watched.size;
+  const pct = seriesData.length ? (watched.size/seriesData.length*100) : 0;
+  document.getElementById('barFill').style.width = pct + '%';
+}
+
+const overlay = document.getElementById('overlay');
+let currentId = null;
+
+function openModal(id){
+  const s = seriesData.find(x=>x.id===id);
+  if(!s) return;
+  currentId = id;
+  document.getElementById('mCover').innerHTML = coverHTML(s);
+  document.getElementById('mTitle').textContent = s.title;
+  document.getElementById('mTags').innerHTML = `
+    <span class="tag ${s.category==='ru'?'cat-ru':'cat-foreign'}">${s.category==='ru'?'Российский':'Иностранный'}</span>
+    <span class="tag genre">${s.genre}</span>
+  `;
+  document.getElementById('mDuration').textContent = s.duration;
+  document.getElementById('mDescription').textContent = s.description;
+  const btn = document.getElementById('watchBtn');
+  setWatchBtn(btn, watched.has(id));
+  overlay.classList.add('open');
+}
+
+function setWatchBtn(btn, isWatched){
+  btn.classList.toggle('is-watched', isWatched);
+  btn.textContent = isWatched ? '✓ Просмотрено' : 'Отметить как просмотрено';
+}
+
+function closeModal(){
+  overlay.classList.remove('open');
+  currentId = null;
+}
+
+document.getElementById('closeBtn').addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+
+document.getElementById('watchBtn').addEventListener('click', () => {
+  if(!currentId) return;
+  if(watched.has(currentId)) watched.delete(currentId);
+  else watched.add(currentId);
+  saveWatched(watched);
+  setWatchBtn(document.getElementById('watchBtn'), watched.has(currentId));
+  renderGrid();
+  updateProgress();
+});
+
+document.getElementById('grid').addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if(card) openModal(card.dataset.id);
+});
+
+document.getElementById('catFilters').addEventListener('click', e => {
+  const btn = e.target.closest('.chip');
+  if(!btn) return;
+  activeCategory = btn.dataset.cat;
+  renderCatFilters();
+  renderGrid();
+});
+
+document.getElementById('genreFilters').addEventListener('click', e => {
+  const btn = e.target.closest('.chip');
+  if(!btn) return;
+  activeGenre = btn.dataset.genre;
+  renderGenreFilters();
+  renderGrid();
+});
+
+renderCatFilters();
+renderGenreFilters();
+renderGrid();
+updateProgress();
+</script>
+</body>
+</html>
